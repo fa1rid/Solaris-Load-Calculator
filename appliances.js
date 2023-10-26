@@ -19,9 +19,10 @@ const appliances = {
                 "Washing Machine": 500,
                 "Dryer": 4000,
                 "Iron": 1500,
-                "Vacuum Cleaner": 800,
                 "Sewing Machine": 150,
                 "Humidifier": 200,
+                "Vacuum Cleaner": 800,
+
             },
         },
         {
@@ -33,6 +34,9 @@ const appliances = {
                 "Home Theater": 1200,
                 "Projector": 800,
                 "Amplifier": 400,
+                "Soundbar": 80,
+                "DVD Player": 35,
+                "Gaming Console": 150,
             },
         },
         {
@@ -41,7 +45,7 @@ const appliances = {
                 "Laptop": 200,
                 "Desktop Computer": 350,
                 "Printer": 600,
-                "Desk Lamp": 60,
+                "Office Desk Lamp": 60,
                 "Scanner": 300,
                 "Shredder": 200,
                 "Router": 10,
@@ -75,29 +79,12 @@ const appliances = {
             },
         },
         {
-            Category: "Home Appliances",
-            Appliances: {
-                "Vacuum Cleaner": 800,
-                "Water Heater": 1500,
-                "Refrigerator": 150,
-                "Microwave": 1200,
-            },
-        },
-        {
-            Category: "TV Entertainment",
-            Appliances: {
-                "TV": 200,
-                "Soundbar": 80,
-                "DVD Player": 35,
-                "Gaming Console": 150,
-            },
-        },
-        {
-            Category: "ACs",
+            Category: "ACs/Heaters",
             Appliances: {
                 "Split AC": 1500,
                 "Window AC": 1200,
                 "Inverter AC": 1700,
+                "Water Heater": 1500,
             },
         },
         {
@@ -206,8 +193,10 @@ function listAppliancesWithPower(appliances) {
 
 let applianceQuantities = {};
 let categoryPower = {};
+let totalLoad
 
 function generateAccordion() {
+    totalLoad = 0;
     // Keeps track of the quantity for each appliance
     applianceQuantities = {};
     // Keeps track of the category power
@@ -217,66 +206,61 @@ function generateAccordion() {
     if (envType === 'Residential') { applianceData = residentialAppl }
     if (envType === 'Commercial') { applianceData = commercialAppl }
 
-    const accordionContainer = document.getElementById('accordionContainer');
-    accordionContainer.innerHTML = '';
+    const catTabs = $('#v-pills-tab');
+    const catContent = $('#v-pills-tabContent');
+    catTabs.html('');
+    catContent.html('');
 
+    let setActive = true;
+    
     for (const categoryID in applianceData) {
         const categoryName = applianceData[categoryID].Category;
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'accordion-item';
-
-        const categoryTitle = document.createElement('h2');
-        categoryTitle.className = 'accordion-header';
-        const categoryTotalPower = categoryPower[categoryID] || '';
-        categoryTitle.innerHTML = `
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${categoryID}" aria-expanded="true">
-        ${categoryName}${categoryTotalPower ? ` (${categoryTotalPower}WX)` : ''}
-      </button>
-    `;
-
         const appliances = applianceData[categoryID].Appliances;
-        const categoryContent = document.createElement('div');
-        categoryContent.className = 'accordion-collapse collapse';
-        categoryContent.setAttribute('data-bs-parent', '#accordionContainer'); // Set data-bs-parent attribute
-        categoryContent.id = `collapse-${categoryID}`;
+        const categoryTotalPower = categoryPower[categoryID] || '';
+        let activeClass = '';
+        if (setActive) activeClass = 'active';
+
+        const catEle = `<button class="nav-link ${activeClass}" id="cat-${categoryID}-tab" data-bs-toggle="pill" data-bs-target="#cat-${categoryID}" type="button" role="tab" aria-controls="cat-${categoryID}" aria-selected="true">${categoryName}${categoryTotalPower ? ` (${categoryTotalPower}W)` : ''}</button>`;
+        catTabs.append(catEle);
+
+        if (setActive) activeClass = 'show active';
+        setActive = false;
+
+        const catContentEle = `<div class="tab-pane fade ${activeClass}" id="cat-${categoryID}" role="tabpanel" aria-labelledby="cat-${categoryID}-tab" tabindex="0"></div>`;
+        catContent.append(catContentEle);
 
         const appliancesList = document.createElement('div');
-        // appliancesList.className = 'accordion-body bg-body';
-        appliancesList.className = 'p-sm-3 px-sm-4 bg-body';
+        appliancesList.className = 'row align-items-stretch';
 
         for (const appliance in appliances) {
             const powerRating = appliances[appliance];
             appliancesList.innerHTML += `
-        <div class=" row bg-body-secondary px-3 py-2 mb-2">
-          <div class="col-md-8 mb-2 mb-md-0 mt-2">${appliance} (${powerRating}W)</div>
-          <div class="col-md-4 mb-2 mb-md-0">
-          <div class="mx-5 mx-md-0 bg-body d-flex align-items-center justify-content-between ">
-            <button style="width:35%" class="btn btn-sm fs-5" onclick="decreaseQuantity('${appliance}')">-</button>
-            <div style="width:30%"  class="border-start border-end h-100 d-flex align-items-center justify-content-center ">
-            <span id="${appliance}-quantity" >0</span>
-            </div>
-            <button style="width:35%" class="btn btn-sm fs-5" onclick="increaseQuantity('${appliance}')">+</button>
-          </div>
-        </div>
-        </div>
-      `;
-            //         appliancesList.innerHTML += `
-            //     <div class="bg-body-tertiary px-3 py-2 d-flex align-items-center justify-content-between mb-2">
-            //       <div>${appliance} (${powerRating}W)</div>
-            //       <div class="ms-2 me-2 bg-body d-flex align-items-center flex-column flex-md-row">
-            //         <button class="btn btn-sm px-4 fs-5" onclick="decreaseQuantity('${appliance}')">-</button>
-            //         <span id="${appliance}-quantity">0</span>
-            //         <button class="btn btn-sm px-4 fs-5" onclick="increaseQuantity('${appliance}')">+</button>
-            //       </div>
-            //     </div>
-            //   `;
-        }
+            <div class="col-lg-6 border">
+                <div class="row my-2 align-items-center ">
+                    <div class="col-8 mb-md-0">${appliance} (${powerRating}W)</div>
+                    <div class="col-4 ps-0 mb-md-0">
+                        <div class="border ms-1 d-flex align-items-stretch  justify-content-between ">
+                            <button style="width:35%" class="p-0 btn btn-sm fs-5 bg-body-tertiary" onclick="decreaseQuantity('${appliance}')">-</button>
+                            <div style="width:30%"  class="border-start border-end d-flex align-items-center justify-content-center ">
+                            <span id="${appliance}-quantity" >0</span>
+                            </div>
+                            <button style="width:35%" class="p-0 btn btn-sm fs-5 bg-body-tertiary" onclick="increaseQuantity('${appliance}')">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
 
-        categoryContent.appendChild(appliancesList);
-        categoryDiv.appendChild(categoryTitle);
-        categoryDiv.appendChild(categoryContent);
-        accordionContainer.appendChild(categoryDiv);
+        }
+        const catContentAplliances = $(`#cat-${categoryID}`);
+        catContentAplliances.append(appliancesList);
+
     }
+
+    $("#custom-load").on('input', function(){
+        const inputValue = $(this).val();
+        $('#totalPower').text(inputValue + 'W');
+        totalLoad = inputValue;
+    })
     return true;
 }
 
@@ -306,15 +290,16 @@ function decreaseQuantity(appliance) {
 }
 
 function updateQuantityDisplay(appliance) {
+    $("#custom-load").val('');
     const quantityElement = document.getElementById(`${appliance}-quantity`);
     quantityElement.textContent = applianceQuantities[appliance];
 
     const totalPowerElement = document.getElementById('totalPower');
     totalPowerElement.textContent = calculateTotalPower() + 'W';
 
-    const categoryTitleElement = document.querySelector(`[data-bs-target="#collapse-${getCategory(appliance)}"]`);
+    const categoryTitleElement = document.getElementById(`cat-${getCategory(appliance)}-tab`);
     const categoryTotalPower = categoryPower[getCategory(appliance)] || '';
-    categoryTitleElement.innerHTML = `${applianceData[getCategory(appliance)].Category}${categoryTotalPower ? ` <span class="badge rounded-pill text-bg-warning ms-2">(${categoryTotalPower}W)</span>` : ''}`;
+    categoryTitleElement.innerHTML = `${applianceData[getCategory(appliance)].Category}${categoryTotalPower ? ` <span class="badge rounded-pill text-bg-warning">(${categoryTotalPower}W)</span>` : ''}`;
 }
 
 function getCategory(appliance) {
@@ -330,7 +315,8 @@ function calculateTotalPower() {
     for (const appliance in applianceQuantities) {
         totalPower += applianceQuantities[appliance] * applianceData[getCategory(appliance)].Appliances[appliance];
     }
-    return totalPower || '';
+    totalLoad = totalPower || 0;
+    return totalPower || '0';
 }
 
 // generateAccordion();
