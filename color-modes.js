@@ -12,6 +12,7 @@ function setTheme() {
     }
 }
 function setThemeIcon() {
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     const iconElement = document.getElementById('icon');
     if (savedTheme) {
