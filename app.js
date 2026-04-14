@@ -162,59 +162,55 @@ let envType;
     range.addEventListener('input', setValue);
 
     async function fetchProductDetails(power) {
-        try {
-            // Fetch the product details from the API
-            const response = await fetch(`https://solarissolutions.co/product_finder_api.php?power=${power}&type=json`);
-            const result = await response.json();
-    
-            // Get the element where the cards will be inserted
-            const recommendedProductDiv = document.getElementById('recommended-product');
-    
-            // Clear any previous content
-            recommendedProductDiv.innerHTML = '';
-    
-            if (result.success && result.data && result.data.length > 0) {
-                // Loop through each product in the data array
-                result.data.forEach(product => {
-                    // Create a card element
-                    const cardHTML = `
-                    <div class="card mb-3" style="max-width: 540px;">
-                      <div class="row g-0">
-                        <div class="col-md-4">
-                          <img src="${product.image_medium}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="${product.name}">
-                        </div>
-                        <div class="col-md-8">
-                          <div class="card-body d-flex flex-column justify-content-between">
-                            <h5 class="card-title">${product.name}</h5>
-                            <p class="card-text">${product.description.length > 100 ? product.description.substring(0, 97) + '...' : product.description}</p>
-                            <a href="${product.url}" class="btn btn-primary">View Product</a>
-                          </div>
-                        </div>
+    // Show a loader immediately while the API request is in progress
+    const recommendedProductDiv = document.getElementById('recommended-product');
+    recommendedProductDiv.innerHTML = `
+      <div id="recommended-loading" class="d-flex justify-content-center align-items-center my-4">
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    `;
+
+    try {
+        // Fetch the product details from the API
+        const response = await fetch(`https://solarissolutions.co/product_finder_api.php?power=${power}&type=json`);
+        const result = await response.json();
+
+        // Clear the loader before inserting results
+        recommendedProductDiv.innerHTML = '';
+
+        if (result.success && result.data && result.data.length > 0) {
+            // Loop through each product in the data array
+            result.data.forEach(product => {
+                // Create a card element
+                const cardHTML = `
+                <div class="card mb-3" style="max-width: 540px;">
+                  <div class="row g-0">
+                    <div class="col-md-4">
+                      <img src="${product.image_medium}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="${product.name}">
+                    </div>
+                    <div class="col-md-8">
+                      <div class="card-body d-flex flex-column justify-content-between">
+                        <h5 class="card-title">${product.name}</h5>
+                        <p class="card-text">${product.description && product.description.length > 100 ? product.description.substring(0, 97) + '...' : (product.description || '')}</p>
+                        <a href="${product.url}" class="btn btn-primary">View Product</a>
                       </div>
                     </div>
-                    `;
-                    // const cardHTML = `
-                    //     <div class="card" style="width: 18rem;">
-                    //         <img src="${product.image_medium}" class="card-img-top" alt="${product.name}">
-                    //         <div class="card-body">
-                    //             <h5 class="card-title">${product.name}</h5>
-                    //             <p class="card-text">${product.description}</p>
-                    //             <a href="${product.url}" class="btn btn-primary">View Product</a>
-                    //         </div>
-                    //     </div>
-                    // `;
-                    // Insert the card into the recommended-product div
-                    recommendedProductDiv.innerHTML += cardHTML;
-                });
-            } else {
-                // Display a message if no products were found
-                recommendedProductDiv.innerHTML = `<p>${result.message}</p>`;
-            }
-        } catch (error) {
-            console.error('Error fetching product details:', error);
-            const recommendedProductDiv = document.getElementById('recommended-product');
-            recommendedProductDiv.innerHTML = '<p>There was an error retrieving the product details. Please try again later.</p>';
+                  </div>
+                </div>
+                `;
+                recommendedProductDiv.innerHTML += cardHTML;
+            });
+        } else {
+            // Display a friendly message if no products were found (only after fetch completes)
+            const message = result && result.message ? result.message : 'No products were found for the selected load.';
+            recommendedProductDiv.innerHTML = `<p class="text-muted">${message}</p>`;
         }
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        // Replace loader with a clear error message
+        recommendedProductDiv.innerHTML = '<p>There was an error retrieving the product details. Please try again later.</p>';
     }
+}
 
 })()
